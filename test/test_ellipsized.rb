@@ -143,11 +143,9 @@ class TestEllipsized < Minitest::Test
   end
 
   def test_with_llm_inputs
-    skip if ENV['RUNNER_OS'] == 'Windows' || (ENV['RUNNER_OS'] == 'macOS' && ENV['RUNNER_ARCH'] == 'ARM64')
+    skip if %w[Windows macOS].include?(ENV['RUNNER_OS'])
     RandomPort::Pool::SINGLETON.acquire do |port|
-      log = donce(
-        image: 'ollama/ollama', ports: { port => 11_434 }, root: true, timeout: 15 * 60, log: Loog::VERBOSE
-      ) do
+      donce(image: 'ollama/ollama', ports: { port => 11_434 }, root: true, log: Loog::NULL) do
         home = Iri.new("http://localhost:#{port}")
         WaitUtil.wait_for_condition('Ollama to start') do
           Net::HTTP.get(home.to_uri) == 'Ollama is running'
@@ -169,7 +167,6 @@ class TestEllipsized < Minitest::Test
         txt = JSON.parse(res.body)['response']
         assert_equal(10, txt.ellipsized(10).length)
       end
-      puts log
     end
   end
 end
